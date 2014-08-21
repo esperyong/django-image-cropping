@@ -4,6 +4,7 @@ import logging
 from django.db.models import get_model, ObjectDoesNotExist
 from django.contrib.admin.widgets import AdminFileWidget, ForeignKeyRawIdWidget
 from django.conf import settings
+from django.core.files.storage import default_storage
 
 from easy_thumbnails.files import get_thumbnailer
 from easy_thumbnails.source_generators import pil_image
@@ -23,7 +24,6 @@ def thumbnail(image_path):
 def get_attrs(image, name):
     try:
         # TODO test case
-        # If the image file has already been closed, open it
         is_qiniu = getattr(default_storage,'is_qiniu',False)
         if is_qiniu:
             image_info = default_storage.image_info(image.path)
@@ -32,6 +32,7 @@ def get_attrs(image, name):
             thurl = image.url + '?imageView2/2/w/%d/h/%d' % \
                     getattr(settings, 'IMAGE_CROPPING_THUMB_SIZE', (300, 300))
         else:
+            # If the image file has already been closed, open it
             if image.closed:
                 image.open()
             # Seek to the beginning of the file.  This is necessary if the
