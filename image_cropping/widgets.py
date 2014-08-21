@@ -27,10 +27,16 @@ def get_attrs(image, name):
         is_qiniu = getattr(default_storage,'is_qiniu',False)
         if is_qiniu:
             image_info = default_storage.image_info(image.path)
-            width = image_info['width']
-            height = image_info['height']
             thurl = image.url + '?imageView2/2/w/%d/h/%d' % \
                     getattr(settings, 'IMAGE_CROPPING_THUMB_SIZE', (300, 300))
+            if image_info is not None:
+                width = image_info['width']
+                height = image_info['height']
+                thurl = image.url + '?imageView2/2/w/%d/h/%d' % \
+                        getattr(settings, 'IMAGE_CROPPING_THUMB_SIZE', (300, 300))
+            else:
+                width = image.width
+                height = image.height
         else:
             # If the image file has already been closed, open it
             if image.closed:
@@ -115,3 +121,4 @@ class CropForeignKeyWidget(ForeignKeyRawIdWidget, CropWidget):
                 logger.error("Object %s.%s doesn't have an attribute named '%s'." % (
                     app_name, model_name, self.field_name))
         return super(CropForeignKeyWidget, self).render(name, value, attrs)
+
