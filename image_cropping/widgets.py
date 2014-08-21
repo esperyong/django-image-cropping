@@ -20,37 +20,42 @@ def thumbnail(image_path):
     thumb = thumbnailer.get_thumbnail(thumbnail_options)
     return thumb.url
 
-
 def get_attrs(image, name):
     try:
         # TODO test case
         # If the image file has already been closed, open it
-        if image.closed:
-            image.open()
+        is_qiniu = getattr(default_storage,'is_qiniu',False)
+        if is_qiniu:
+            image_info = default_storage.image_info(image.path)
+            width = image_info['width']
+            height = image_info['height']
+            thurl = image.url + '?imageView2/2/w/%d/h/%d' % \
+                    getattr(settings, 'IMAGE_CROPPING_THUMB_SIZE', (300, 300))
+        else:
+            if image.closed:
+                image.open()
+            # Seek to the beginning of the file.  This is necessary if the
+            # image has already been read using this file handler
+            image.seek(0)
+            try:
+                # open image and rotate according to its exif.orientation
+                width, height = pil_image(image).size
+            except AttributeError:
+                # invalid image -> AttributeError
+                width = image.width
+                height = image.height
 
-        # Seek to the beginning of the file.  This is necessary if the
-        # image has already been read using this file handler
-        image.seek(0)
-
-        try:
-            # open image and rotate according to its exif.orientation
-            width, height = pil_image(image).size
-        except AttributeError:
-            # invalid image -> AttributeError
-            width = image.width
-            height = image.height
-
+            thurl = thumbnail(image)
         return {
             'class': "crop-thumb",
-            'data-thumbnail-url': thumbnail(image),
+            'data-thumbnail-url': thurl,
             'data-field-name': name,
             'data-org-width': width,
             'data-org-height': height,
         }
-    except (ValueError, AttributeError):
+    except ValueError:
         # can't create thumbnail from image
         return {}
-
 
 class CropWidget(object):
     class Media:
