@@ -25,18 +25,29 @@ def get_attrs(image, name):
     try:
         # TODO test case
         is_qiniu = getattr(default_storage,'is_qiniu',False)
+        print 'is_qiniu ===>',is_qiniu
         if is_qiniu:
-            image_info = default_storage.image_info(image.path)
-            thurl = image.url + '?imageView2/2/w/%d/h/%d' % \
-                    getattr(settings, 'IMAGE_CROPPING_THUMB_SIZE', (300, 300))
-            if image_info is not None:
-                width = image_info['width']
-                height = image_info['height']
+            image_path = getattr(image,'path',None)
+            if image_path is not None:
                 thurl = image.url + '?imageView2/2/w/%d/h/%d' % \
                         getattr(settings, 'IMAGE_CROPPING_THUMB_SIZE', (300, 300))
+                image_info = default_storage.image_info(image.path)
+                if image_info is not None:
+                    width = image_info['width']
+                    height = image_info['height']
+                else:
+                    if image.closed:
+                        image.open()
+                    width, height = pil_image(image).size
+                print '1 thurl===>',thurl
             else:
-                width = image.width
-                height = image.height
+                if image.closed:
+                    image.open()
+                width, height = pil_image(image).size
+                thurl = default_storage.url(image.name) + '?imageView2/2/w/%d/h/%d' % \
+                        getattr(settings, 'IMAGE_CROPPING_THUMB_SIZE', (300, 300))
+                print '2 thurl===>',thurl
+
         else:
             # If the image file has already been closed, open it
             if image.closed:
@@ -121,4 +132,5 @@ class CropForeignKeyWidget(ForeignKeyRawIdWidget, CropWidget):
                 logger.error("Object %s.%s doesn't have an attribute named '%s'." % (
                     app_name, model_name, self.field_name))
         return super(CropForeignKeyWidget, self).render(name, value, attrs)
+
 
