@@ -25,7 +25,6 @@ def get_attrs(image, name):
     try:
         # TODO test case
         is_qiniu = getattr(default_storage,'is_qiniu',False)
-        print 'is_qiniu ===>',is_qiniu
         if is_qiniu:
             image_path = getattr(image,'path',None)
             if image_path is not None:
@@ -39,14 +38,11 @@ def get_attrs(image, name):
                     if image.closed:
                         image.open()
                     width, height = pil_image(image).size
-                print '1 thurl===>',thurl
             else:
                 if image.closed:
                     image.open()
                 width, height = pil_image(image).size
-                thurl = default_storage.url(image.name) + '?imageView2/2/w/%d/h/%d' % \
-                        getattr(settings, 'IMAGE_CROPPING_THUMB_SIZE', (300, 300))
-                print '2 thurl===>',thurl
+                thurl = '' 
 
         else:
             # If the image file has already been closed, open it
